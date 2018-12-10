@@ -1,0 +1,71 @@
+plugins {
+  id 'java'
+  id 'maven-publish'
+  id 'com.github.johnrengelman.shadow' version '4.0.3'
+}
+
+group 'com.hrznstudio'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+  jcenter()
+  maven { url = 'https://maven.gegy1000.net' }
+  maven { url = 'https://files.minecraftforge.net/maven' }
+  maven { url = 'http://maven.thiakil.com' }
+}
+
+build.dependsOn(shadowJar)
+
+configurations {
+  shade
+  compile.extendsFrom shade
+}
+
+dependencies {
+  compileOnly gradleApi()
+
+  shade 'net.minecraftforge:artifactural:1.0.8'
+  shade 'org.ow2.asm:asm-commons:5.0.3'
+  shade 'org.apache.maven:maven-model:3.6.0'
+
+  shade 'com.hrznstudio:spark-patch:0.1.4-SNAPSHOT'
+  shade 'lexmanos:forgeflower:1.5.380-4c154119'
+}
+
+sourceSets {
+  main.compileClasspath += configurations.shade
+  main.runtimeClasspath += configurations.shade
+}
+
+shadowJar {
+  classifier = null
+  configurations = [project.configurations.shade]
+}
+
+publishing {
+  publications {
+    shadow(MavenPublication) { publication ->
+      groupId project.group
+      artifactId project.archivesBaseName
+      version project.version
+
+      project.shadow.component(publication)
+    }
+  }
+  repositories {
+    if (project.hasProperty('mavenUsername')) {
+      maven {
+        credentials {
+          username project.mavenUsername ?: ""
+          password project.mavenPassword ?: ""
+        }
+        url project.mavenUrl ?: ""
+      }
+    } else {
+      mavenLocal()
+    }
+  }
+}
